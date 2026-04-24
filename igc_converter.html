@@ -6493,9 +6493,10 @@ function validateRows(rows) {
       else fixes.push(`Row ${rowNum}: Landing was blank — set to "Good".`);
     }
 
-    // ── Auto-fix: Launch_Type blank → no error (optional effectively) ─────────
-    // Launch_Type invalid value → error (user must pick a valid one)
-    if (row['Launch_Type'] && row['Launch_Type'].trim() !== '' && !VALID_LAUNCH_TYPE.includes(row['Launch_Type'].trim())) {
+    // ── Launch_Type: mandatory, hard fail if blank or invalid ────────────────
+    if (!row['Launch_Type'] || row['Launch_Type'].trim() === '') {
+      errors.push(`Row ${rowNum}: Launch Type is blank. Please fill in one of: ${VALID_LAUNCH_TYPE.join(', ')}.`);
+    } else if (!VALID_LAUNCH_TYPE.includes(row['Launch_Type'].trim())) {
       errors.push(`Row ${rowNum}: Launch Type "${row['Launch_Type']}" is not valid. Must be one of: ${VALID_LAUNCH_TYPE.join(', ')}.`);
     }
 
