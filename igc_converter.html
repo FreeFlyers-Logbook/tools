@@ -167,38 +167,38 @@
   /* Template download card */
   .template-download {
     display: flex;
-    align-items: flex-start;
+    flex-direction: column;
     gap: 1rem;
-    padding: 1.2rem 1.2rem;
+    padding: 1.2rem;
     background: var(--sky);
     border-radius: 14px;
     border: 1.5px solid rgba(0,124,146,0.2);
-    flex-wrap: wrap;
   }
 
-  .template-icon { font-size: 2rem; flex-shrink: 0; }
+  .template-icon { font-size: 2rem; flex-shrink: 0; display: none; }
 
   .template-info {
-    flex: 1;
-    min-width: 0;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
+    width: 100%;
   }
 
   .template-info h4 {
     font-size: 0.9rem;
     font-weight: 700;
     color: var(--cobalt);
-    margin-bottom: 0.3rem;
-    word-break: break-all;
+    margin-bottom: 0.5rem;
+    display: none;
   }
 
   .template-info p {
-    font-size: 0.78rem;
+    font-size: 0.82rem;
     color: var(--grey);
-    font-family: 'DM Mono', monospace;
-    line-height: 1.6;
-    word-wrap: break-word;
+    font-family: 'Roboto', sans-serif;
+    line-height: 1.7;
+  }
+
+  .template-download .btn {
+    width: 100%;
+    text-align: center;
   }
 
   .pill {
@@ -525,17 +525,18 @@
     <div class="notice" style="background:#fff8e1; border-color:#f59e0b; margin-bottom:0.5rem;">💻 <strong>This step is best completed on a PC</strong> — the template is an Excel file that requires a spreadsheet application to edit.</div>
 
     <div class="template-download">
-      <div class="template-icon">📋</div>
       <div class="template-info">
-        <h4>FreeFlyers_Logbook_Import_Template.xlsx</h4>
         <p>
           Download the template, then paste your Step 1 CSV data into columns A–D (Site, Date, Duration, Height_ASL). No IGC files? No problem — you can fill the template in directly from any existing records you have.<br><br>
-          <span class="pill pill-purple">Purple columns</span> are mandatory — fill in Glider, Landing and Launch Type for every row.<br>
+          <span class="pill pill-purple">Purple columns</span> are mandatory — fill in Glider, Landing Rating (1–5) and Launch Type for every row.<br>
           <span class="pill pill-blue">Blue columns</span> are optional. Save the completed file and upload it in Step 3.<br><br>
           ⚠️ <strong>Important:</strong> Site names must match exactly what you have set up in the app (including capitalisation). Mismatched names will appear as separate entries in your flight list.
         </p>
       </div>
-      <button class="btn btn-teal" id="btnTemplate">⬇ Download</button>
+    </div>
+    <div class="btn-row" style="justify-content:flex-end;">
+      <button class="btn btn-teal" id="btnTemplate">⬇ Download Template</button>
+    </div>
     </div>
   </div>
 
