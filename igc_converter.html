@@ -6022,7 +6022,7 @@ let processedFlights = [];
 
 // ─── Template Download ────────────────────────────────────────────────────────
 document.getElementById('btnTemplate').addEventListener('click', () => {
-  const url = 'https://firebasestorage.googleapis.com/v0/b/free-flyers-logbook-0jdv2y.firebasestorage.app/o/FreeFlyers_Logbook_Template_V1.1.xlsx?alt=media';
+  const url = 'https://firebasestorage.googleapis.com/v0/b/free-flyers-logbook-0jdv2y.firebasestorage.app/o/FreeFlyers_Logbook_Template%20V1.1.xlsx?alt=media';
   const a = document.createElement('a');
   a.href = url; a.download = 'FreeFlyers_Logbook_Template_V1.1.xlsx'; a.click();
 });
@@ -6309,7 +6309,7 @@ const SECRET_KEY = 'FFL-2026-xK9$mPq!vR3#nJw8@zT5&hY2';
 const VALID_LANDING = ['Good','Got away with it','Crash'];
 // Launch types per flying discipline — must match the app's App Constants exactly (and the template's hidden Dropdowns sheet)
 const LAUNCH_TYPES_HG = ['Coastal','Aerotow','Ground Tow','Hill','Powered HG'];
-const LAUNCH_TYPES_PG = ['Hill (PG)','Coastal (PG)','Ground Tow (PG)','Hike & Fly','Speed Flying','SIV / Acro'];
+const LAUNCH_TYPES_PG = ['Hill (PG)','Coastal (PG)','Ground Tow (PG)','Hike & Fly','Speed Flying','SIV / Acro','Powered PG'];
 const VALID_LAUNCH_TYPE = [...LAUNCH_TYPES_HG, ...LAUNCH_TYPES_PG];
 const VALID_XC_TYPE = ['','Open Distance','Out & Return','Distance via TP','Race to Goal'];
 const MANDATORY_COLS = ['Site','Date','Duration','Height_ASL','Glider','Launch_Type']; // Landing_Rating auto-defaults to 5; Year auto-generated; Media always blank
@@ -6517,6 +6517,14 @@ function validateRows(rows) {
       } else if (fixed !== row['Date'].trim()) {
         fixes.push(`Row ${rowNum}: Date "${row['Date'].trim()}" reformatted to "${fixed}".`);
         row['Date'] = fixed;
+      }
+      // ── Date must not be in the future (pasting into Excel bypasses its date check) ──
+      if (fixed) {
+        const now = new Date();
+        const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+        if (fixed > todayStr) {
+          errors.push(`Row ${rowNum}: Date "${fixed}" is in the future. Please check the year.`);
+        }
       }
     }
 
