@@ -527,7 +527,7 @@
     <div class="template-download">
       <div class="template-info">
         <p>
-          Download the template, then paste your Step 1 CSV data into columns A–D (Site, Date, Duration, Height_ASL). No IGC files? No problem — you can fill the template in directly from any existing records you have.<br><br>
+          Download the template and first choose your <strong>Flying Discipline</strong> in cell B1 (Hang_Gliding, Paragliding or Both) — this sets the Launch Type options to match the app. Then paste your Step 1 CSV data into columns A–D (Site, Date, Duration, Height_ASL), starting at cell A3 below the headers. No IGC files? No problem — you can fill the template in directly from any existing records you have.<br><br>
           <span class="pill pill-purple">Purple columns</span> are mandatory — fill in Glider, Landing Rating (1–5) and Launch Type for every row.<br>
           <span class="pill pill-blue">Blue columns</span> are optional. Save the completed file and upload it in Step 3.<br><br>
           ⚠️ <strong>Important:</strong> Site names must match exactly what you have set up in the app (including capitalisation). Mismatched names will appear as separate entries in your flight list.
@@ -6022,9 +6022,9 @@ let processedFlights = [];
 
 // ─── Template Download ────────────────────────────────────────────────────────
 document.getElementById('btnTemplate').addEventListener('click', () => {
-  const url = 'https://firebasestorage.googleapis.com/v0/b/free-flyers-logbook-0jdv2y.firebasestorage.app/o/FreeFlyers_Logbook_Template%20V1.0.xlsx?alt=media';
+  const url = 'https://firebasestorage.googleapis.com/v0/b/free-flyers-logbook-0jdv2y.firebasestorage.app/o/FreeFlyers_Logbook_Template_V1.1.xlsx?alt=media';
   const a = document.createElement('a');
-  a.href = url; a.download = 'FreeFlyers_Logbook_Template_V1.0.xlsx'; a.click();
+  a.href = url; a.download = 'FreeFlyers_Logbook_Template_V1.1.xlsx'; a.click();
 });
 // ─── File Selection ───────────────────────────────────────────────────────────
 document.getElementById('igcFiles').addEventListener('change', function(e) {
@@ -6307,7 +6307,10 @@ function sleep(ms) { return new Promise(r=>setTimeout(r,ms)); }
 // ─── Validation & Stamping ────────────────────────────────────────────────────
 const SECRET_KEY = 'FFL-2026-xK9$mPq!vR3#nJw8@zT5&hY2';
 const VALID_LANDING = ['Good','Got away with it','Crash'];
-const VALID_LAUNCH_TYPE = ['Coastal','Aerotow','Ground Tow','Hill'];
+// Launch types per flying discipline — must match the app's App Constants exactly (and the template's hidden Dropdowns sheet)
+const LAUNCH_TYPES_HG = ['Coastal','Aerotow','Ground Tow','Hill','Powered HG'];
+const LAUNCH_TYPES_PG = ['Hill (PG)','Coastal (PG)','Ground Tow (PG)','Hike & Fly','Speed Flying','SIV / Acro'];
+const VALID_LAUNCH_TYPE = [...LAUNCH_TYPES_HG, ...LAUNCH_TYPES_PG];
 const VALID_XC_TYPE = ['','Open Distance','Out & Return','Distance via TP','Race to Goal'];
 const MANDATORY_COLS = ['Site','Date','Duration','Height_ASL','Glider','Launch_Type']; // Landing_Rating auto-defaults to 5; Year auto-generated; Media always blank
 
@@ -6400,16 +6403,20 @@ async function parseUploadedFile(file) {
           const data = new Uint8Array(e.target.result);
           const workbook = XLSX.read(data, {type:'array', cellText:true, cellDates:false});
           const sheet = workbook.Sheets['flights'] || workbook.Sheets[workbook.SheetNames[0]];
-          const json = XLSX.utils.sheet_to_json(sheet, {header:1, raw:false, dateNF:'yyyy-mm-dd'});
-          if (json.length < 2) { resolve([]); return; }
-          const headers = json[0].map(h => String(h||'').trim());
-          const rows = json.slice(1)
-            .filter(r => r.some(c => c !== undefined && c !== ''))
-            .map(r => {
-              const obj = {};
-              headers.forEach((h,i) => { obj[h] = r[i] !== undefined ? String(r[i]).trim() : ''; });
-              return obj;
-            });
+          const json = XLSX.utils.sheet_to_json(sheet, {header:1, raw:false, dateNF:'yyyy-mm-dd', blankrows:true});
+          // Find the header row (first cell = "Site"). V1.0 template: row 1. V1.1+: row 2 (row 1 = Flying Discipline selector).
+          const sheetStartRow = XLSX.utils.decode_range(sheet['!ref']).s.r; // 0-based Excel row of json[0]
+          const headerIdx = json.findIndex(r => r && String(r[0]||'').trim() === 'Site');
+          if (headerIdx < 0 || json.length < headerIdx + 2) { const empty = []; empty._fflToken = ''; resolve(empty); return; }
+          const headers = json[headerIdx].map(h => String(h||'').trim());
+          const rows = [];
+          json.slice(headerIdx + 1).forEach((r, i) => {
+            if (!r || !r.some(c => c !== undefined && c !== null && String(c).trim() !== '')) return;
+            const obj = {};
+            headers.forEach((h,j) => { if (h) obj[h] = r[j] !== undefined && r[j] !== null ? String(r[j]).trim() : ''; });
+            obj._rowNum = sheetStartRow + headerIdx + 2 + i; // actual Excel row number, for error messages
+            rows.push(obj);
+          });
           // Read token from cell Z1 (col 25, row 0) to verify this is the correct template
           const tokenCell = sheet[XLSX.utils.encode_cell({r:0, c:25})];
           rows._fflToken = tokenCell ? String(tokenCell.v || '').trim() : '';
@@ -6477,7 +6484,7 @@ function validateRows(rows) {
   if (rows.length === 0) { errors.push('No data rows found in the file.'); return { errors, fixes }; }
 
   rows.forEach((row, idx) => {
-    const rowNum = idx + 2;
+    const rowNum = row._rowNum || idx + 2;
 
     // ── Auto-fix: Site blank → "Unknown" ──────────────────────────────────────
     if (!row['Site'] || row['Site'].trim() === '') {
